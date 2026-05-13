@@ -176,6 +176,10 @@ export def GetComponents(): list<simplenine.Component>
   return INSTANCE.GetComponents()
 enddef
 
+export def UpdateComponents(UpdateFunc: func(list<simplenine.Component>): list<simplenine.Component>)
+  SetComponents(UpdateFunc(GetComponents()))
+enddef
+
 export def SetFileTypeComponents(filetype: string, components: list<simplenine.Component>)
   INSTANCE.SetFileTypeComponents(filetype, components)
 enddef
@@ -188,12 +192,20 @@ export def SetBufTypeComponents(buftype: string, components: list<simplenine.Com
   INSTANCE.SetBufTypeComponents(buftype, components)
 enddef
 
+export def UpdateFileTypeComponents(filetype: string, UpdateFunc: func(list<simplenine.Component>): list<simplenine.Component>)
+  SetFileTypeComponents(filetype, UpdateFunc(GetFileTypeComponents(filetype)))
+enddef
+
 export def GetBufTypeComponents(buftype: string): list<simplenine.Component>
   return INSTANCE.GetBufTypeComponents(buftype)
 enddef
 
 export def GetStatusLineString(active: bool = true, filetype: string = &filetype, buftype: string = &buftype): string
   return INSTANCE.StatusLine(active, filetype, buftype)
+enddef
+
+export def UpdateBufTypeComponents(buftype: string, UpdateFunc: func(list<simplenine.Component>): list<simplenine.Component>)
+  SetBufTypeComponents(buftype, UpdateFunc(GetBufTypeComponents(buftype)))
 enddef
 
 # vim: et sw=2:
