@@ -2,13 +2,13 @@ vim9script
 scriptencoding utf-8
 
 export interface Component
-  def Compile(active: bool, pre: string, post: string): string
+  def Compile(active: bool, pre: string, post: string, highlight_base: string): string
 endinterface
 
 export class RawComponent implements Component
   var _component: string
 
-  def Compile(active: bool, pre: string, post: string): string
+  def Compile(active: bool, pre: string, post: string, highlight_base: string): string
     return this._component
   enddef
 
@@ -17,10 +17,10 @@ export class RawComponent implements Component
 endclass
 
 export class StringComponent implements Component
-  # pre%#highlight#component%*post
-  static const _FORMAT_NO_GUARD = '%s%%#%s#%s%%*%s'  # pre, highlight, component, post
-  # %{%this._GuardFunc()?"pre%#highlight#component%*post":""%}
-  static const _FORMAT_GUARD = '%%{%%%s(%s)?"%s%%#%s#%s%%*%s":""%%}'  # GuardFunc(), active, pre, highlight, component, post
+  # pre%#highlight#component%#highlight_base#post
+  static const _FORMAT_NO_GUARD = '%s%%#%s#%s%%#%s#%s'  # pre, highlight, component, highlight_base, post
+  # %{%this._GuardFunc()?"pre%#highlight#component%#highlight_base#post":""%}
+  static const _FORMAT_GUARD = '%%{%%%s(%s)?"%s%%#%s#%s%%#%s#%s":""%%}'  # GuardFunc(), active, pre, highlight, component, highlight_base, post
 
   var _component: string
   var _GuardFunc: func(bool): bool = null_function
@@ -31,13 +31,14 @@ export class StringComponent implements Component
     return escape(s, "\"\\")
   enddef
 
-  def Compile(active: bool, pre: string, post: string): string
+  def Compile(active: bool, pre: string, post: string, highlight_base: string): string
     if this._GuardFunc is null_function
       return printf(
         _FORMAT_NO_GUARD,
         pre,
         active ? this._highlight : this._highlight_inactive,
         this._component,
+        highlight_base,
         post
       )
     else
@@ -48,6 +49,7 @@ export class StringComponent implements Component
         _Escape(pre),
         active ? _Escape(this._highlight) : _Escape(this._highlight_inactive),
         _Escape(this._component),
+        _Escape(highlight_base),
         _Escape(post)
       )
     endif
@@ -58,10 +60,10 @@ export class StringComponent implements Component
 endclass
 
 export class FunctionComponent implements Component
-  # pre%#highlight#%{ComponentFunc()}%*post
-  static const _FORMAT_NO_GUARD = '%s%%#%s#%%{%s(%s)}%%*%s'  # pre, highlight, ComponentFunc(), active, post
-  # %{%GuardFunc()?"pre%#highlight#%{ComponentFunc()}%*post":""%}
-  static const _FORMAT_GUARD = '%%{%%%s(%s)?"%s%%#%s#%%{%s(%s)}%%*%s":""%%}'  # GuardFunc(), active, pre, highlight, ComponentFunc(), active, post
+  # pre%#highlight#%{ComponentFunc()}%#highlight_base#post
+  static const _FORMAT_NO_GUARD = '%s%%#%s#%%{%s(%s)}%%#%s#%s'  # pre, highlight, ComponentFunc(), active, highlight_base, post
+  # %{%GuardFunc()?"pre%#highlight#%{ComponentFunc()}%#highlight_base#post":""%}
+  static const _FORMAT_GUARD = '%%{%%%s(%s)?"%s%%#%s#%%{%s(%s)}%%#%s#%s":""%%}'  # GuardFunc(), active, pre, highlight, ComponentFunc(), active, highlight_base, post
 
   var _ComponentFunc: func(bool): string
   var _GuardFunc: func(bool): bool = null_function
@@ -72,7 +74,7 @@ export class FunctionComponent implements Component
     return escape(s, "\"\\")
   enddef
 
-  def Compile(active: bool, pre: string, post: string): string
+  def Compile(active: bool, pre: string, post: string, highlight_base: string): string
     if this._GuardFunc is null_function
       return printf(
         _FORMAT_NO_GUARD,
@@ -80,6 +82,7 @@ export class FunctionComponent implements Component
         active ? this._highlight : this._highlight_inactive,
         string(this._ComponentFunc),
         active ? "v:true" : "v:false",
+        highlight_base,
         post
       )
     else
@@ -91,6 +94,7 @@ export class FunctionComponent implements Component
         active ? _Escape(this._highlight) : _Escape(this._highlight_inactive),
         string(this._ComponentFunc),
         active ? "v:true" : "v:false",
+        _Escape(highlight_base),
         _Escape(post)
       )
     endif

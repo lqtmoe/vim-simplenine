@@ -19,12 +19,13 @@ class SimpleNine
 
   def _Compile(components: list<simplenine.Component>, active: bool): string
     var statusline: string
+    var highlight_base: string = active ? "SimpleNine" : "SimpleNineInactive"
 
     for component in components
-      statusline ..= component.Compile(active, this._pre, this._post)
+      statusline ..= component.Compile(active, this._pre, this._post, highlight_base)
     endfor
 
-    return "%{\" \"}" .. statusline .. "%{\" \"}"
+    return $"%#{highlight_base}#" .. "%{\" \"}" .. statusline .. "%{\" \"}"
   enddef
 
   def SetComponents(components: list<simplenine.Component>)
@@ -141,23 +142,25 @@ def SetupColorScheme()
     execute "highlight" "default" "SimpleNine" .. name "ctermfg=" .. ctermfg "guifg=" .. guifg
   endfor
 
+  highlight default link SimpleNine SimpleNineNormal
   highlight default link SimpleNineComponent Normal
   highlight default link SimpleNineComponentInactive SimpleNineInactive
 
-  highlight clear StatusLine
-  highlight! link StatusLine SimpleNineNormal
-  highlight clear StatusLineNC
-  highlight! link StatusLineNC SimpleNineInactive
-  highlight clear StatusLineTerm
-  highlight! link StatusLineTerm SimpleNineTerminal
-  highlight clear StatusLineTermNC
-  highlight! link StatusLineTermNC SimpleNineInactive
+  for hl in [ "StatusLine", "StatusLineTerm" ]
+    execute "highlight" "clear" hl
+    execute "highlight!" "link" hl "SimpleNineComponent"
+  endfor
+
+  for hl in [ "StatusLineNC", "StatusLineTermNC" ]
+    execute "highlight" "clear" hl
+    execute "highlight!" "link" hl "SimpleNineComponentInactive"
+  endfor
 
   UpdateStlColor(mode())
 enddef
 
 def UpdateStlColor(mode: string)
-  execute "highlight!" "link" "StatusLine" get(MODE_MAP, mode, "SimpleNineNormal")
+  execute "highlight!" "link" "SimpleNine" get(MODE_MAP, mode, "SimpleNineNormal")
 enddef
 
 def StatusLine(): string
